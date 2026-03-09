@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Mic } from 'lucide-react';
+import { KeyRound, Mail, Mic } from 'lucide-react';
 
 import { useAuth } from '@/components/auth-provider';
+import { useApiKey } from '@/components/api-key-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +37,9 @@ export function Navbar() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { apiKey, setApiKey, clearApiKey } = useApiKey();
+  const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const [isApiKeyOpen, setIsApiKeyOpen] = useState(false);
 
   const handleAuthError = (error: unknown, defaultMessage: string) => {
     const message =
@@ -100,6 +104,7 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      clearApiKey();
       toast({
         title: 'Signed out',
         description: 'You have been logged out.',
@@ -107,6 +112,23 @@ export function Navbar() {
     } catch (error) {
       handleAuthError(error, 'Unable to sign out. Please try again.');
     }
+  };
+
+  const handleSaveApiKey = () => {
+    if (!apiKeyDraft.trim()) {
+      toast({
+        title: 'API key required',
+        description: 'Please paste a valid API key.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setApiKey(apiKeyDraft.trim());
+    setIsApiKeyOpen(false);
+    toast({
+      title: 'API key saved',
+      description: 'Your API key will be used for transcription requests.',
+    });
   };
 
   return (
@@ -152,7 +174,7 @@ export function Navbar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
             onClick={scrollToDemo}
             size="sm"
@@ -160,6 +182,62 @@ export function Navbar() {
           >
             Try the Demo
           </Button>
+          <Dialog open={isApiKeyOpen} onOpenChange={setIsApiKeyOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:inline-flex"
+                disabled={isLoading}
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                {apiKey ? 'Change API Key' : 'Set API Key'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Set your API key</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Paste the API key for your Voice-to-Text backend. It will be stored only
+                  in this browser session and sent with each transcription request.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="api-key">API key</Label>
+                  <Input
+                    id="api-key"
+                    type="password"
+                    autoComplete="off"
+                    value={apiKeyDraft}
+                    onChange={(e) => setApiKeyDraft(e.target.value)}
+                    placeholder="sk_..."
+                  />
+                </div>
+                <div className="flex justify-between items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      setApiKeyDraft('');
+                      clearApiKey();
+                    }}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    onClick={handleSaveApiKey}
+                  >
+                    Save API Key
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {user ? (
             <div className="flex items-center gap-2">
               <span className="hidden text-sm text-muted-foreground md:inline-flex">

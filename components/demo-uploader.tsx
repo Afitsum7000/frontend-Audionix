@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { AlertCircle, FileAudio, Lock, Upload, X } from 'lucide-react';
 
 import { useAuth } from '@/components/auth-provider';
+import { useApiKey } from '@/components/api-key-provider';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { TranscriptionResult } from '@/components/transcription-result';
@@ -26,6 +27,7 @@ export function DemoUploader() {
   const [transcription, setTranscription] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { session, user, isLoading: isAuthLoading } = useAuth();
+  const { apiKey } = useApiKey();
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -107,6 +109,11 @@ export function DemoUploader() {
       return;
     }
 
+    if (!apiKey) {
+      setError('Missing API key. Please set your API key from the top bar before transcribing.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -123,6 +130,7 @@ export function DemoUploader() {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
+          'X-API-Key': apiKey,
         },
         body: formData,
       });
