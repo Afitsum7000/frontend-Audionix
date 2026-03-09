@@ -1,2 +1,2 @@
 configure the readme
-new config
+new confi
