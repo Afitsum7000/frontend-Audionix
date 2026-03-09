@@ -18,10 +18,10 @@ const navItems = [
 export function DocsSidebar() {
   return (
     <aside className="hidden lg:flex w-64 flex-col fixed left-0 top-0 h-screen border-r border-border bg-sidebar">
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
+      <Link href="/" className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <AudioLines className="h-6 w-6 text-accent" />
         <span className="text-lg font-semibold tracking-tight">AUDIONIX</span>
-      </div>
+      </Link>
       
       <nav className="flex-1 px-4 py-6 overflow-y-auto">
         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">

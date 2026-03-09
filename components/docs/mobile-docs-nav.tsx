@@ -23,10 +23,10 @@ export function MobileDocsNav() {
     <div className="lg:hidden">
       {/* Mobile Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <AudioLines className="h-5 w-5 text-accent" />
           <span className="font-semibold">AUDIONIX Docs</span>
-        </div>
+        </Link>
         <Button
           variant="ghost"
           size="sm"
