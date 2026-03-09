@@ -1,45 +1,51 @@
-\"use client\";
+'use client';
 
-import { useState } from \"react\";
-import Link from \"next/link\";
-import { Mail, Mic } from \"lucide-react\";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Mail, Mic } from 'lucide-react';
 
-import { useAuth } from \"@/components/auth-provider\";
-import { Button } from \"@/components/ui/button\";
-import { Input } from \"@/components/ui/input\";
-import { Label } from \"@/components/ui/label\";
+import { useAuth } from '@/components/auth-provider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from \"@/components/ui/dialog\";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from \"@/components/ui/tabs\";
-import { useToast } from \"@/hooks/use-toast\";
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 
 export function Navbar() {
   const scrollToDemo = () => {
-    document.getElementById(\"demo\")?.scrollIntoView({ behavior: \"smooth\" });
+    document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const { user, isLoading, signOut, signInWithPassword, signUpWithPassword, signInWithMagicLink } =
-    useAuth();
+  const {
+    user,
+    isLoading,
+    signOut,
+    signInWithPassword,
+    signUpWithPassword,
+    signInWithMagicLink,
+  } = useAuth();
   const { toast } = useToast();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [email, setEmail] = useState(\"\");
-  const [password, setPassword] = useState(\"\");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAuthError = (error: unknown, defaultMessage: string) => {
     const message =
-      error && typeof error === \"object\" && \"message\" in error
+      error && typeof error === 'object' && 'message' in error
         ? String((error as any).message)
         : defaultMessage;
     toast({
-      title: \"Authentication error\",
+      title: 'Authentication error',
       description: message,
-      variant: \"destructive\",
+      variant: 'destructive',
     });
   };
 
@@ -48,14 +54,14 @@ export function Navbar() {
     try {
       await signInWithPassword(email, password);
       setIsAuthOpen(false);
-      setEmail(\"\");
-      setPassword(\"\");
+      setEmail('');
+      setPassword('');
       toast({
-        title: \"Signed in\",
-        description: \"You are now logged in.\",
+        title: 'Signed in',
+        description: 'You are now logged in.',
       });
     } catch (error) {
-      handleAuthError(error, \"Unable to sign in. Please check your credentials.\");
+      handleAuthError(error, 'Unable to sign in. Please check your credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -66,11 +72,11 @@ export function Navbar() {
     try {
       await signUpWithPassword(email, password);
       toast({
-        title: \"Check your email\",
-        description: \"We have sent you a confirmation link.\",
+        title: 'Check your email',
+        description: 'We have sent you a confirmation link.',
       });
     } catch (error) {
-      handleAuthError(error, \"Unable to sign up. Please try again.\");
+      handleAuthError(error, 'Unable to sign up. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -81,11 +87,11 @@ export function Navbar() {
     try {
       await signInWithMagicLink(email);
       toast({
-        title: \"Magic link sent\",
-        description: \"Check your inbox for a sign-in link.\",
+        title: 'Magic link sent',
+        description: 'Check your inbox for a sign-in link.',
       });
     } catch (error) {
-      handleAuthError(error, \"Unable to send magic link. Please try again.\");
+      handleAuthError(error, 'Unable to send magic link. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,73 +101,73 @@ export function Navbar() {
     try {
       await signOut();
       toast({
-        title: \"Signed out\",
-        description: \"You have been logged out.\",
+        title: 'Signed out',
+        description: 'You have been logged out.',
       });
     } catch (error) {
-      handleAuthError(error, \"Unable to sign out. Please try again.\");
+      handleAuthError(error, 'Unable to sign out. Please try again.');
     }
   };
 
   return (
-    <nav className=\"fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl\">
-      <div className=\"mx-auto flex h-16 max-w-7xl items-center justify-between px-6\">
-        <Link href=\"/\" className=\"flex items-center gap-2\">
-          <div className=\"flex h-9 w-9 items-center justify-center rounded-lg bg-accent\">
-            <Mic className=\"h-5 w-5 text-accent-foreground\" />
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent">
+            <Mic className="h-5 w-5 text-accent-foreground" />
           </div>
-          <span className=\"text-xl font-semibold tracking-tight\">AUDIONIX</span>
+          <span className="text-xl font-semibold tracking-tight">AUDIONIX</span>
         </Link>
 
-        <div className=\"hidden items-center gap-8 md:flex\">
+        <div className="hidden items-center gap-8 md:flex">
           <Link
-            href=\"/\"
-            className=\"text-sm text-muted-foreground transition-colors hover:text-foreground\"
+            href="/"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Home
           </Link>
           <a
-            href=\"#features\"
-            className=\"text-sm text-muted-foreground transition-colors hover:text-foreground\"
+            href="#features"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Features
           </a>
           <a
-            href=\"#how-it-works\"
-            className=\"text-sm text-muted-foreground transition-colors hover:text-foreground\"
+            href="#how-it-works"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             How It Works
           </a>
           <a
-            href=\"#demo\"
-            className=\"text-sm text-muted-foreground transition-colors hover:text-foreground\"
+            href="#demo"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Demo
           </a>
           <Link
-            href=\"/docs\"
-            className=\"text-sm text-muted-foreground transition-colors hover:text-foreground\"
+            href="/docs"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             API Docs
           </Link>
         </div>
 
-        <div className=\"flex items-center gap-3\">
+        <div className="flex items-center gap-3">
           <Button
             onClick={scrollToDemo}
-            size=\"sm\"
-            className=\"hidden rounded-full md:inline-flex\"
+            size="sm"
+            className="hidden rounded-full md:inline-flex"
           >
             Try the Demo
           </Button>
           {user ? (
-            <div className=\"flex items-center gap-2\">
-              <span className=\"hidden text-sm text-muted-foreground md:inline-flex\">
+            <div className="flex items-center gap-2">
+              <span className="hidden text-sm text-muted-foreground md:inline-flex">
                 {user.email}
               </span>
               <Button
-                variant=\"outline\"
-                size=\"sm\"
+                variant="outline"
+                size="sm"
                 onClick={handleSignOut}
                 disabled={isLoading}
               >
@@ -171,8 +177,8 @@ export function Navbar() {
           ) : (
             <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
               <DialogTrigger asChild>
-                <Button variant=\"outline\" size=\"sm\" disabled={isLoading}>
-                  <Mail className=\"mr-2 h-4 w-4\" />
+                <Button variant="outline" size="sm" disabled={isLoading}>
+                  <Mail className="mr-2 h-4 w-4" />
                   Login / Sign up
                 </Button>
               </DialogTrigger>
@@ -180,45 +186,45 @@ export function Navbar() {
                 <DialogHeader>
                   <DialogTitle>Sign in to transcribe audio</DialogTitle>
                 </DialogHeader>
-                <Tabs defaultValue=\"password\">
-                  <TabsList className=\"mb-4\">
-                    <TabsTrigger value=\"password\">Email &amp; Password</TabsTrigger>
-                    <TabsTrigger value=\"magic\">Magic Link</TabsTrigger>
+                <Tabs defaultValue="password">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="password">Email &amp; Password</TabsTrigger>
+                    <TabsTrigger value="magic">Magic Link</TabsTrigger>
                   </TabsList>
-                  <TabsContent value=\"password\" className=\"space-y-4\">
-                    <div className=\"space-y-2\">
-                      <Label htmlFor=\"email\">Email</Label>
+                  <TabsContent value="password" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
                       <Input
-                        id=\"email\"
-                        type=\"email\"
-                        autoComplete=\"email\"
+                        id="email"
+                        type="email"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder=\"you@example.com\"
+                        placeholder="you@example.com"
                       />
                     </div>
-                    <div className=\"space-y-2\">
-                      <Label htmlFor=\"password\">Password</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
                       <Input
-                        id=\"password\"
-                        type=\"password\"
-                        autoComplete=\"current-password\"
+                        id="password"
+                        type="password"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder=\"••••••••\"
+                        placeholder="••••••••"
                       />
                     </div>
-                    <div className=\"flex gap-2\">
+                    <div className="flex gap-2">
                       <Button
-                        className=\"flex-1\"
+                        className="flex-1"
                         onClick={handleSignIn}
                         disabled={isSubmitting || !email || !password}
                       >
                         Log in
                       </Button>
                       <Button
-                        className=\"flex-1\"
-                        variant=\"outline\"
+                        className="flex-1"
+                        variant="outline"
                         onClick={handleSignUp}
                         disabled={isSubmitting || !email || !password}
                       >
@@ -226,20 +232,20 @@ export function Navbar() {
                       </Button>
                     </div>
                   </TabsContent>
-                  <TabsContent value=\"magic\" className=\"space-y-4\">
-                    <div className=\"space-y-2\">
-                      <Label htmlFor=\"magic-email\">Email</Label>
+                  <TabsContent value="magic" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="magic-email">Email</Label>
                       <Input
-                        id=\"magic-email\"
-                        type=\"email\"
-                        autoComplete=\"email\"
+                        id="magic-email"
+                        type="email"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder=\"you@example.com\"
+                        placeholder="you@example.com"
                       />
                     </div>
                     <Button
-                      className=\"w-full\"
+                      className="w-full"
                       onClick={handleMagicLink}
                       disabled={isSubmitting || !email}
                     >

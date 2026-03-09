@@ -1,22 +1,22 @@
-\"use client\";
+'use client';
 
-import { useState, useCallback } from \"react\";
-import { AlertCircle, FileAudio, Lock, Upload, X } from \"lucide-react\";
+import { useState, useCallback } from 'react';
+import { AlertCircle, FileAudio, Lock, Upload, X } from 'lucide-react';
 
-import { useAuth } from \"@/components/auth-provider\";
-import { Button } from \"@/components/ui/button\";
-import { Spinner } from \"@/components/ui/spinner\";
-import { TranscriptionResult } from \"@/components/transcription-result\";
+import { useAuth } from '@/components/auth-provider';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { TranscriptionResult } from '@/components/transcription-result';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ACCEPTED_FORMATS = [
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "audio/x-wav",
-  "audio/m4a",
-  "audio/x-m4a",
-  "audio/mp4",
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/m4a',
+  'audio/x-m4a',
+  'audio/mp4',
 ];
 
 export function DemoUploader() {
@@ -35,14 +35,14 @@ export function DemoUploader() {
 
   const validateFile = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) {
-      return "File size exceeds 25MB limit. Please upload a smaller file.";
+      return 'File size exceeds 25MB limit. Please upload a smaller file.';
     }
     if (
       !ACCEPTED_FORMATS.some((format) =>
-        file.type.includes(format.split("/")[1]),
+        file.type.includes(format.split('/')[1]),
       )
     ) {
-      return "Invalid file format. Please upload MP3, WAV, or M4A files.";
+      return 'Invalid file format. Please upload MP3, WAV, or M4A files.';
     }
     return null;
   };
@@ -103,7 +103,7 @@ export function DemoUploader() {
     if (!file) return;
 
     if (!session) {
-      setError("You need to be logged in to transcribe audio.");
+      setError('You need to be logged in to transcribe audio.');
       return;
     }
 
@@ -112,15 +112,15 @@ export function DemoUploader() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
       const token = session.access_token;
       const backendUrl =
         process.env.NEXT_PUBLIC_AUDIONIX_API_URL ??
-        "https://audionix-production.up.railway.app";
+        'https://audionix-production.up.railway.app';
 
-      const response = await fetch(`${backendUrl.replace(/\/$/, "")}/transcribe`, {
-        method: "POST",
+      const response = await fetch(`${backendUrl.replace(/\/$/, '')}/transcribe`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -137,7 +137,7 @@ export function DemoUploader() {
       setError(
         err instanceof Error
           ? err.message
-          : "An error occurred during transcription",
+          : 'An error occurred during transcription',
       );
     } finally {
       setIsLoading(false);
@@ -162,7 +162,7 @@ export function DemoUploader() {
             <div className="mb-4 flex items-center gap-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
               <Lock className="h-4 w-4" />
               <p>
-                Transcription is available for authenticated users. Use the{" "}
+                Transcription is available for authenticated users. Use the{' '}
                 <span className="font-medium">Login / Sign up</span> button in the top bar
                 to create an account.
               </p>
@@ -176,8 +176,8 @@ export function DemoUploader() {
             onDragLeave={handleDragLeave}
             className={`relative rounded-2xl border-2 border-dashed p-12 text-center transition-all ${
               isDragging
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/50"
+                ? 'border-accent bg-accent/5'
+                : 'border-border hover:border-muted-foreground/50'
             }`}
           >
             <input
@@ -244,7 +244,7 @@ export function DemoUploader() {
                 Transcribing...
               </>
             ) : (
-              "Transcribe Audio"
+              'Transcribe Audio'
             )}
           </Button>
 
@@ -255,3 +255,4 @@ export function DemoUploader() {
     </section>
   );
 }
+
