@@ -88,10 +88,15 @@ export function DemoUploader() {
       const formData = new FormData()
       formData.append("file", file)
 
+      const apiKey = process.env.NEXT_PUBLIC_AUDIONIX_API_KEY
+      if (!apiKey) {
+        throw new Error("API key not configured. Please set NEXT_PUBLIC_AUDIONIX_API_KEY environment variable.")
+      }
+
       const response = await fetch("https://audionix-production.up.railway.app/transcribe", {
         method: "POST",
         headers: {
-          "X-API-Key": "USER_API_KEY",
+          "X-API-Key": apiKey,
         },
         body: formData,
       })
