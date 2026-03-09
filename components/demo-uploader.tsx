@@ -1,10 +1,12 @@
-"use client";
+\"use client\";
 
-import { useState, useCallback } from "react";
-import { Upload, FileAudio, X, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { TranscriptionResult } from "@/components/transcription-result";
+import { useState, useCallback } from \"react\";
+import { AlertCircle, FileAudio, Lock, Upload, X } from \"lucide-react\";
+
+import { useAuth } from \"@/components/auth-provider\";
+import { Button } from \"@/components/ui/button\";
+import { Spinner } from \"@/components/ui/spinner\";
+import { TranscriptionResult } from \"@/components/transcription-result\";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ACCEPTED_FORMATS = [
@@ -23,6 +25,7 @@ export function DemoUploader() {
   const [isLoading, setIsLoading] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { session, user, isLoading: isAuthLoading } = useAuth();
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -99,6 +102,11 @@ export function DemoUploader() {
   const handleTranscribe = async () => {
     if (!file) return;
 
+    if (!session) {
+      setError("You need to be logged in to transcribe audio.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -106,23 +114,18 @@ export function DemoUploader() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const apiKey = process.env.NEXT_PUBLIC_AUDIONIX_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "API key not configured. Please set NEXT_PUBLIC_AUDIONIX_API_KEY environment variable.",
-        );
-      }
+      const token = session.access_token;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_AUDIONIX_API_URL ??
+        "https://audionix-production.up.railway.app";
 
-      const response = await fetch(
-        "https://audionix-production.up.railway.app/transcribe",
-        {
-          method: "POST",
-          headers: {
-            "X-API-Key": apiKey,
-          },
-          body: formData,
+      const response = await fetch(`${backendUrl.replace(/\/$/, "")}/transcribe`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error(`Transcription failed: ${response.statusText}`);
@@ -149,11 +152,23 @@ export function DemoUploader() {
             Try It Now
           </h2>
           <p className="text-muted-foreground">
-            Upload an audio file and see our AI transcription in action.
+            Upload an audio file and see our AI transcription in action. You need to be
+            logged in with Supabase to run transcriptions.
           </p>
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-8">
+          {!user && !isAuthLoading && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
+              <Lock className="h-4 w-4" />
+              <p>
+                Transcription is available for authenticated users. Use the{" "}
+                <span className="font-medium">Login / Sign up</span> button in the top bar
+                to create an account.
+              </p>
+            </div>
+          )}
+
           {/* Upload Area */}
           <div
             onDrop={handleDrop}
