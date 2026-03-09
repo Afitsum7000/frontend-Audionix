@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { ArrowRight, AudioLines } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, AudioLines } from "lucide-react";
 
 // Pre-computed heights to avoid hydration mismatch
 const WAVEFORM_HEIGHTS = [
-  40, 49, 57, 63, 67, 69, 69, 66, 61, 55,
-  48, 41, 35, 31, 30, 31, 35, 41, 48, 55,
-  61, 66, 69, 69, 67, 63, 57, 49, 40, 32,
-  25, 20, 18, 18, 21, 26, 32, 39, 47, 54
-]
+  40, 49, 57, 63, 67, 69, 69, 66, 61, 55, 48, 41, 35, 31, 30, 31, 35, 41, 48,
+  55, 61, 66, 69, 69, 67, 63, 57, 49, 40, 32, 25, 20, 18, 18, 21, 26, 32, 39,
+  47, 54,
+];
 
 export function Hero() {
   const scrollToDemo = () => {
-    document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" })
-  }
+    document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden pt-16">
@@ -47,12 +47,21 @@ export function Hero() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button size="lg" onClick={scrollToDemo} className="group rounded-full px-8">
+          <Button
+            size="lg"
+            onClick={scrollToDemo}
+            className="group rounded-full px-8"
+          >
             Try the Demo
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
-          <Button size="lg" variant="outline" className="rounded-full px-8">
-            View API Docs
+          <Button
+            size="lg"
+            variant="outline"
+            className="rounded-full px-8"
+            asChild
+          >
+            <Link href="/docs">View API Docs</Link>
           </Button>
         </div>
 
@@ -68,5 +77,5 @@ export function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
