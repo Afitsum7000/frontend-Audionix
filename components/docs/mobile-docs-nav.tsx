@@ -1,20 +1,10 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import {
-  AudioLines,
-  Menu,
-  X,
-  BookOpen,
-  Code,
-  FileJson,
-  Key,
-  AlertCircle,
-  Terminal,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { useState } from "react"
+import Link from "next/link"
+import { AudioLines, Menu, X, BookOpen, Code, FileJson, Key, AlertCircle, Terminal } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "#introduction", label: "Introduction", icon: BookOpen },
@@ -24,10 +14,10 @@ const navItems = [
   { href: "#example-request", label: "Example Request", icon: Terminal },
   { href: "#example-response", label: "Example Response", icon: FileJson },
   { href: "#notes", label: "Notes & Limitations", icon: AlertCircle },
-];
+]
 
 export function MobileDocsNav() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <div className="lg:hidden">
@@ -62,7 +52,7 @@ export function MobileDocsNav() {
                     onClick={() => setIsOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-                      "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
+                      "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                     )}
                   >
                     <item.icon className="h-4 w-4" />
@@ -83,5 +73,5 @@ export function MobileDocsNav() {
         </div>
       )}
     </div>
-  );
+  )
 }
