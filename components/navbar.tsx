@@ -37,9 +37,14 @@ export function Navbar() {
           </Link>
         </div>
 
-        <Button onClick={scrollToDemo} className="rounded-full">
-          Try the Demo
-        </Button>
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground hidden sm:block">
+            Sign in
+          </Link>
+          <Button asChild className="rounded-full">
+            <Link href="/sign-up">Get Started</Link>
+          </Button>
+        </div>
       </div>
     </nav>
   )
