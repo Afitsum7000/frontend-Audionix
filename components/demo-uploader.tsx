@@ -5,6 +5,7 @@ import { Upload, FileAudio, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { TranscriptionResult } from "@/components/transcription-result"
+import { useAuth } from "@/src/context/AuthProvider"
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
 const ACCEPTED_FORMATS = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/m4a", "audio/x-m4a", "audio/mp4"]
@@ -78,6 +79,8 @@ export function DemoUploader() {
     setError(null)
   }
 
+  const { session } = useAuth()
+
   const handleTranscribe = async () => {
     if (!file) return
 
@@ -88,21 +91,30 @@ export function DemoUploader() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const apiKey = process.env.NEXT_PUBLIC_AUDIONIX_API_KEY
-      if (!apiKey) {
-        throw new Error("API key not configured. Please set NEXT_PUBLIC_AUDIONIX_API_KEY environment variable.")
-      }
-
       const response = await fetch("https://audionix-production.up.railway.app/transcribe", {
         method: "POST",
         headers: {
-          "X-API-Key": apiKey,
+          ...(process.env.NEXT_PUBLIC_AUDIONIX_API_KEY
+            ? { "X-API-Key": process.env.NEXT_PUBLIC_AUDIONIX_API_KEY }
+            : {}),
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
         },
         body: formData,
       })
 
       if (!response.ok) {
-        throw new Error(`Transcription failed: ${response.statusText}`)
+        let detail = response.statusText
+        try {
+          const errJson = await response.json()
+          if (errJson?.detail) {
+            detail = errJson.detail
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(`Transcription failed: ${detail}`)
       }
 
       const data = await response.json()
