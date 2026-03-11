@@ -6,14 +6,47 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/src/context/AuthProvider"
 import { supabase } from "@/src/lib/supabaseClient"
 import { ProtectedRoute } from "@/src/components/ProtectedRoute"
-import { AudioLines, LogOut, FileAudio, Clock, Zap, Copy, Check } from "lucide-react"
+import { AudioLines, LogOut, FileAudio, Clock, Zap } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { formatDistanceToNow, format } from "date-fns"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { backendUrl, fetchJson } from "@/src/lib/backend"
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
   const router = useRouter()
-  const [copied, setCopied] = useState(false)
+  const [statsLoading, setStatsLoading] = useState(false)
+  const [statsError, setStatsError] = useState<string | null>(null)
+  const [stats, setStats] = useState<{
+    total_transcriptions: number
+    minutes_processed: number
+    api_calls_this_month: number
+    active_api_keys: number
+  } | null>(null)
+
+  const [keysLoading, setKeysLoading] = useState(false)
+  const [keysError, setKeysError] = useState<string | null>(null)
+  const [apiKeys, setApiKeys] = useState<
+    { id: string; name: string; created_at: string; last_used_at?: string | null; revoked: boolean }[]
+  >([])
+
+  const [newKeyName, setNewKeyName] = useState("")
+  const [createLoading, setCreateLoading] = useState(false)
+  const [createdKey, setCreatedKey] = useState<{ id: string; api_key: string } | null>(null)
+  const [createdKeyCopied, setCreatedKeyCopied] = useState(false)
   const [profileCreatedAt, setProfileCreatedAt] = useState<string | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
 
@@ -47,10 +80,105 @@ export default function DashboardPage() {
     router.push("/login")
   }
 
-  const handleCopyApiKey = () => {
-    navigator.clipboard.writeText("demo_api_key_xxxxxxxxxxxx")
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  useEffect(() => {
+    let mounted = true
+    async function loadTenantData() {
+      if (!user) return
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      if (!token) return
+
+      setStatsLoading(true)
+      setStatsError(null)
+      setKeysLoading(true)
+      setKeysError(null)
+      try {
+        const [s, k] = await Promise.all([
+          fetchJson<{
+            total_transcriptions: number
+            minutes_processed: number
+            api_calls_this_month: number
+            active_api_keys: number
+          }>(backendUrl("/dashboard/stats"), {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetchJson<
+            { id: string; name: string; created_at: string; last_used_at?: string | null; revoked: boolean }[]
+          >(backendUrl("/api-keys"), {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ])
+        if (!mounted) return
+        setStats(s)
+        setApiKeys(k)
+      } catch (e) {
+        if (!mounted) return
+        const msg = e instanceof Error ? e.message : "Failed to load dashboard data."
+        setStatsError(msg)
+        setKeysError(msg)
+      } finally {
+        if (!mounted) return
+        setStatsLoading(false)
+        setKeysLoading(false)
+      }
+    }
+    loadTenantData()
+    return () => {
+      mounted = false
+    }
+  }, [user])
+
+  const handleCreateApiKey = async () => {
+    if (!user) return
+    const name = newKeyName.trim()
+    if (!name) return
+
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    if (!token) return
+
+    setCreateLoading(true)
+    setKeysError(null)
+    try {
+      const created = await fetchJson<{ api_key: string; id: string }>(backendUrl("/api-keys"), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      })
+
+      setCreatedKey({ id: created.id, api_key: created.api_key })
+      setCreatedKeyCopied(false)
+      setNewKeyName("")
+
+      const fresh = await fetchJson<
+        { id: string; name: string; created_at: string; last_used_at?: string | null; revoked: boolean }[]
+      >(backendUrl("/api-keys"), { headers: { Authorization: `Bearer ${token}` } })
+      setApiKeys(fresh)
+    } catch (e) {
+      setKeysError(e instanceof Error ? e.message : "Failed to create API key.")
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
+  const handleRevokeKey = async (id: string) => {
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    if (!token) return
+
+    setKeysError(null)
+    try {
+      await fetchJson<{ success: boolean }>(backendUrl(`/api-keys/${id}`), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const fresh = await fetchJson<
+        { id: string; name: string; created_at: string; last_used_at?: string | null; revoked: boolean }[]
+      >(backendUrl("/api-keys"), { headers: { Authorization: `Bearer ${token}` } })
+      setApiKeys(fresh)
+    } catch (e) {
+      setKeysError(e instanceof Error ? e.message : "Failed to revoke API key.")
+    }
   }
 
   const createdAtText = useMemo(() => {
@@ -133,7 +261,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Transcriptions</p>
-                  <p className="text-2xl font-bold">—</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? "…" : stats ? stats.total_transcriptions.toLocaleString() : "—"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -145,7 +275,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Minutes Processed</p>
-                  <p className="text-2xl font-bold">—</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? "…" : stats ? Math.round(stats.minutes_processed).toLocaleString() : "—"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -157,39 +289,132 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">API Calls This Month</p>
-                  <p className="text-2xl font-bold">—</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? "…" : stats ? stats.api_calls_this_month.toLocaleString() : "—"}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">API Key</h2>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <code className="flex-1 rounded-lg bg-secondary px-4 py-3 font-mono text-sm overflow-x-auto">
-                demo_api_key_xxxxxxxxxxxx
-              </code>
-              <Button variant="outline" size="sm" onClick={handleCopyApiKey}>
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+            <h2 className="text-lg font-semibold mb-4">API Keys</h2>
+            {statsError ? <p className="mb-4 text-sm text-destructive">{statsError}</p> : null}
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  placeholder="New API key name (e.g. Production Key)"
+                />
+                <Button onClick={handleCreateApiKey} disabled={createLoading || !newKeyName.trim()}>
+                  Create API key
+                </Button>
+              </div>
+
+              {keysError ? <p className="text-sm text-destructive">{keysError}</p> : null}
+
+              <div className="rounded-lg border border-border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Last used</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {keysLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-muted-foreground">
+                          Loading…
+                        </TableCell>
+                      </TableRow>
+                    ) : apiKeys.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-muted-foreground">
+                          No API keys yet.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      apiKeys.map((k) => (
+                        <TableRow key={k.id}>
+                          <TableCell className="font-medium">{k.name}</TableCell>
+                          <TableCell>{k.created_at ? format(new Date(k.created_at), "PPP") : "—"}</TableCell>
+                          <TableCell>
+                            {k.last_used_at ? formatDistanceToNow(new Date(k.last_used_at), { addSuffix: true }) : "—"}
+                          </TableCell>
+                          <TableCell>{k.revoked ? "Revoked" : "Active"}</TableCell>
+                          <TableCell className="text-right">
+                            {k.revoked ? null : (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    Revoke
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Revoke API key?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This key will stop working immediately. You can’t undo this action.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleRevokeKey(k.id)}>
+                                      Revoke
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <Dialog open={!!createdKey} onOpenChange={(open) => (!open ? setCreatedKey(null) : null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>API key created</DialogTitle>
+                    <DialogDescription>
+                      Copy this API key now. For security, it will only be shown once.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-3">
+                    <code className="rounded-lg bg-secondary px-4 py-3 font-mono text-sm overflow-x-auto">
+                      {createdKey?.api_key}
+                    </code>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (!createdKey?.api_key) return
+                        navigator.clipboard.writeText(createdKey.api_key)
+                        setCreatedKeyCopied(true)
+                        setTimeout(() => setCreatedKeyCopied(false), 2000)
+                      }}
+                    >
+                      {createdKeyCopied ? "Copied" : "Copy API key"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <p className="text-sm text-muted-foreground">
+                Use your API key with `X-API-Key`. See{" "}
+                <Link href="/docs" className="text-accent hover:underline">
+                  API documentation
+                </Link>
+                .
+              </p>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              API key management will appear here. For now, see the{" "}
-              <Link href="/docs" className="text-accent hover:underline">
-                API documentation
-              </Link>
-              .
-            </p>
           </div>
         </main>
       </div>

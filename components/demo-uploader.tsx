@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { TranscriptionResult } from "@/components/transcription-result"
 import { useAuth } from "@/src/context/AuthProvider"
+import { Input } from "@/components/ui/input"
+import { backendUrl } from "@/src/lib/backend"
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
 const ACCEPTED_FORMATS = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/m4a", "audio/x-m4a", "audio/mp4"]
@@ -16,6 +18,7 @@ export function DemoUploader() {
   const [isLoading, setIsLoading] = useState(false)
   const [transcription, setTranscription] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [apiKey, setApiKey] = useState<string>("")
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`
@@ -91,12 +94,10 @@ export function DemoUploader() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const response = await fetch("https://audionix-production.up.railway.app/transcribe", {
+      const response = await fetch(backendUrl("/transcribe"), {
         method: "POST",
         headers: {
-          ...(process.env.NEXT_PUBLIC_AUDIONIX_API_KEY
-            ? { "X-API-Key": process.env.NEXT_PUBLIC_AUDIONIX_API_KEY }
-            : {}),
+          ...(apiKey.trim() ? { "X-API-Key": apiKey.trim() } : {}),
           ...(session?.access_token
             ? { Authorization: `Bearer ${session.access_token}` }
             : {}),
@@ -139,6 +140,20 @@ export function DemoUploader() {
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-8">
+          <div className="mb-6">
+            <label className="text-sm font-medium">API key</label>
+            <div className="mt-2">
+              <Input
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="audionix_live_..."
+                disabled={isLoading}
+              />
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create an API key in your dashboard, then paste it here to run a transcription.
+            </p>
+          </div>
           {/* Upload Area */}
           <div
             onDrop={handleDrop}
